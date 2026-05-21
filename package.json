@@ -8,6 +8,7 @@
   "scripts": {
     "desktop:dev": "npm --workspace apps/desktop run dev",
     "desktop:build": "npm --workspace apps/desktop run build",
-    "cli:install": "powershell -NoProfile -ExecutionPolicy Bypass -File cli/install-star.ps1"
+    "cli:install": "powershell -NoProfile -ExecutionPolicy Bypass -File cli/install-star.ps1",
+    "cli:install:unix": "bash cli/install-star.sh"
   }
 }

@@ -28,6 +28,7 @@ ai-company/
 - [MVP TODO](ai-company-mvp-todo.md)
 - [Architecture](docs/architecture.md)
 - [Star Command](docs/star-command.md)
+- [Release Build](docs/release-build.md)
 - [Upstream Relay Fuel Reference](docs/upstream-relay-fuel-reference.md)
 
 ## First Run
@@ -62,4 +63,13 @@ Open a new terminal in any project directory:
 star ai-company
 ```
 
-Tauri packaging will be wired after the desktop shell and API contract stabilize.
+## Release Build
+
+Push a version tag to build desktop packages:
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+GitHub Actions will build Windows, Linux, macOS Intel, and macOS Apple Silicon packages with the FastAPI local relay included as a Tauri sidecar.

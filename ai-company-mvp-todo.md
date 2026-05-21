@@ -48,6 +48,7 @@ MVP 不追求复杂自治，也不做完全开放式多 Agent 网络。先做固
 - [x] 桌面端：Tauri
 - [x] 前端：React + TypeScript + Vite
 - [x] 本地 API：FastAPI
+- [x] 发布包：Tauri bundle + FastAPI sidecar
 - [x] 本地数据库：SQLite + SQLModel
 - [x] 模型调用：通过本地 API 服务统一中转
 - [x] 状态持久化：SQLite
@@ -64,6 +65,7 @@ MVP 不追求复杂自治，也不做完全开放式多 Agent 网络。先做固
 - [x] 整理 `new-api` 与 `codex-proxy` 可复用内容到 `docs/upstream-relay-fuel-reference.md`
 - [x] 设计现代化深色科技感操作页面
 - [x] 实现左侧 Tab 页面切换
+- [x] GitHub tag 触发 Windows / Linux / macOS 三端自动打包
 
 ## 6. 核心概念
 
@@ -363,6 +365,7 @@ POST   /relay/chat/completions
 - [ ] Agent Worker 真实进程在工作区 cwd 中运行
 - [ ] 多角色可以在工作区内持续推进一个任务
 - [ ] App 重启后可以恢复工作区、任务和会话状态
+- [x] tag 发布时自动生成三端软件包草稿 Release
 
 ## 14. 暂不做的功能
 
@@ -393,3 +396,4 @@ POST   /relay/chat/completions
 - [ ] 第八轮：文件工具权限和工作区读写能力
 - [ ] 第九轮：多角色协作编排器，总经理/副经理/岗位轮转推进任务
 - [ ] 第十轮：会话恢复、失败重试、运行监控和交付结果页面
+- [x] 发布轮：打 tag 自动构建 Windows / Linux / macOS 软件包

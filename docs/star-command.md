@@ -11,11 +11,18 @@ cd D:\桌面\play\ai-company\services\api
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8787
 ```
 
-安装命令：
+Windows 安装命令：
 
 ```powershell
 cd D:\桌面\play\ai-company
 npm run cli:install
+```
+
+macOS / Linux 安装命令：
+
+```bash
+cd /path/to/ai-company
+npm run cli:install:unix
 ```
 
 进入任意工作区后执行：

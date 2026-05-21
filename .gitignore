@@ -9,6 +9,10 @@ __pycache__/
 *.pyc
 
 target/
+apps/desktop/src-tauri/binaries/
+build/
+dist/
+*.spec
 
 .env
 .env.*

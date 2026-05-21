@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+API_BASE="${AI_COMPANY_API:-http://127.0.0.1:8787}"
+API_BASE="${API_BASE%/}"
+
+if [[ "${1:-}" != "ai-company" ]]; then
+  echo "Usage: star ai-company [path]"
+  exit 2
+fi
+
+shift
+if [[ $# -gt 0 ]]; then
+  WORKSPACE_PATH="$*"
+else
+  WORKSPACE_PATH="$(pwd)"
+fi
+
+WORKSPACE_NAME="$(basename "$WORKSPACE_PATH")"
+
+python3 - "$API_BASE" "$WORKSPACE_PATH" "$WORKSPACE_NAME" <<'PY'
+import json
+import sys
+import urllib.error
+import urllib.request
+
+api_base, path, name = sys.argv[1:4]
+payload = json.dumps({"path": path, "name": name, "source": "star-cli"}, ensure_ascii=False).encode("utf-8")
+request = urllib.request.Request(
+    f"{api_base}/workspaces/activate",
+    data=payload,
+    headers={"Content-Type": "application/json; charset=utf-8"},
+    method="POST",
+)
+try:
+    with urllib.request.urlopen(request, timeout=10) as response:
+        result = json.loads(response.read().decode("utf-8"))
+except urllib.error.URLError as exc:
+    print("Failed to activate AI Company workspace.", file=sys.stderr)
+    print(f"API: {api_base}", file=sys.stderr)
+    print(exc, file=sys.stderr)
+    sys.exit(1)
+
+print("AI Company workspace activated")
+print(f"Name : {result['name']}")
+print(f"Path : {result['path']}")
+print(f"API  : {api_base}")
+PY
