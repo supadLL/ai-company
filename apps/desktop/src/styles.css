@@ -1,0 +1,1306 @@
+:root {
+  color: #f2f7f1;
+  background: #080b0a;
+  font-family:
+    "Microsoft YaHei UI",
+    "Segoe UI",
+    "Aptos",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --panel: rgba(16, 23, 21, 0.76);
+  --panel-strong: rgba(22, 33, 29, 0.88);
+  --line: rgba(172, 255, 214, 0.16);
+  --muted: #8fa49a;
+  --text: #f2f7f1;
+  --mint: #67f7b1;
+  --cyan: #5fd8ff;
+  --amber: #ffd36a;
+  --rose: #ff7b9c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+a,
+textarea,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.appShell {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(103, 247, 177, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(95, 216, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(135deg, #080b0a 0%, #111813 48%, #0b0f0d 100%);
+  background-size: 34px 34px, 34px 34px, cover;
+}
+
+.sideRail {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 26px 18px;
+  border-right: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(20, 32, 28, 0.92), rgba(8, 11, 10, 0.88)),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 12px);
+  backdrop-filter: blur(22px);
+}
+
+.brandBlock,
+.relayBox,
+.navItem,
+.metricTile,
+.missionDeck,
+.workflowPanel,
+.orgPanel,
+.focusPanel,
+.logPanel {
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+}
+
+.brandBlock {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.brandIcon,
+.roundIcon,
+.relayIcon,
+.roleAvatar,
+.orbitalIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.brandIcon {
+  width: 48px;
+  height: 48px;
+  color: #08100c;
+  background: linear-gradient(135deg, var(--mint), var(--cyan));
+  box-shadow: 0 0 28px rgba(103, 247, 177, 0.32);
+}
+
+.brandBlock strong,
+.brandBlock span,
+.relayBox strong,
+.relayBox span {
+  display: block;
+}
+
+.brandBlock strong {
+  font-size: 17px;
+  letter-spacing: 0;
+}
+
+.brandBlock span,
+.relayBox span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.navList {
+  display: grid;
+  gap: 10px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 12px;
+  width: 100%;
+  color: #b9c8c0;
+  text-align: left;
+  text-decoration: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.navItem:hover,
+.navItem.active {
+  color: var(--text);
+  border-color: rgba(103, 247, 177, 0.44);
+  background: rgba(103, 247, 177, 0.1);
+  transform: translateX(3px);
+}
+
+.roundIcon {
+  width: 36px;
+  height: 36px;
+  color: var(--mint);
+  background: rgba(103, 247, 177, 0.1);
+  border: 1px solid rgba(103, 247, 177, 0.18);
+}
+
+.relayBox {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: auto;
+  padding: 14px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.relayIcon {
+  width: 42px;
+  height: 42px;
+  color: var(--cyan);
+  background: rgba(95, 216, 255, 0.1);
+}
+
+.commandSurface {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+  padding: 28px;
+  overflow: auto;
+}
+
+.commandHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.statusLine,
+.kicker,
+.panelTitle span {
+  color: var(--mint);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statusLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 28px;
+  padding: 0 12px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(103, 247, 177, 0.24);
+  border-radius: 999px;
+  background: rgba(103, 247, 177, 0.08);
+}
+
+.liveDot {
+  width: 8px;
+  height: 8px;
+  background: var(--mint);
+  border-radius: 999px;
+  box-shadow: 0 0 18px var(--mint);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 900px;
+  margin-bottom: 0;
+  color: var(--text);
+  font-size: 38px;
+  line-height: 1.16;
+  letter-spacing: 0;
+}
+
+h2 {
+  margin-bottom: 0;
+  color: var(--text);
+  letter-spacing: 0;
+}
+
+.headerActions,
+.missionActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.primaryButton,
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 18px;
+  color: var(--text);
+  border-radius: 999px;
+}
+
+.primaryButton {
+  color: #06100b;
+  border: 0;
+  background: linear-gradient(135deg, var(--mint), var(--cyan));
+  box-shadow: 0 0 34px rgba(103, 247, 177, 0.26);
+}
+
+.ghostButton {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  border-color: rgba(103, 247, 177, 0.34);
+  background: rgba(103, 247, 177, 0.08);
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.metricTile {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 86px;
+  padding: 16px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.metricIcon {
+  width: 42px;
+  height: 42px;
+}
+
+.metricTile p,
+.roleCard p,
+.focusPanel p,
+.logList p {
+  color: var(--muted);
+}
+
+.metricTile p {
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.metricTile strong {
+  font-size: 21px;
+}
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+  grid-template-areas:
+    "flow side"
+    "org side";
+  gap: 18px;
+}
+
+.fuelGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+  grid-template-areas:
+    "mission side"
+    "login side"
+    "org side";
+  gap: 18px;
+}
+
+.taskGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  grid-template-areas:
+    "mission side"
+    "dispatch side"
+    "org side";
+  gap: 18px;
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "mission side"
+    "run side"
+    "org side"
+    "list side";
+  gap: 18px;
+}
+
+.missionDeck,
+.workflowPanel,
+.orgPanel,
+.focusPanel,
+.logPanel {
+  border-radius: 28px;
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+}
+
+.missionDeck {
+  grid-area: mission;
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.taskGrid .missionDeck:nth-child(2) {
+  grid-area: dispatch;
+}
+
+.workspaceGrid .missionDeck:nth-child(2) {
+  grid-area: run;
+}
+
+.fuelGrid .loginFuelCard {
+  grid-area: login;
+}
+
+.workspaceGrid .orgPanel:nth-child(3) {
+  grid-area: org;
+}
+
+.workspaceGrid .orgPanel:nth-child(4) {
+  grid-area: list;
+}
+
+.deckHeader,
+.panelTitle,
+.roleTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.kicker {
+  margin-bottom: 8px;
+}
+
+.missionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  color: var(--amber);
+  border: 1px solid rgba(255, 211, 106, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 211, 106, 0.08);
+}
+
+.missionInput {
+  width: 100%;
+  min-height: 132px;
+  padding: 18px;
+  color: var(--text);
+  line-height: 1.7;
+  resize: vertical;
+  border: 1px solid rgba(95, 216, 255, 0.18);
+  border-radius: 22px;
+  outline: none;
+  background:
+    linear-gradient(90deg, rgba(95, 216, 255, 0.06), transparent),
+    rgba(4, 8, 7, 0.52);
+}
+
+.missionInput:focus {
+  border-color: rgba(103, 247, 177, 0.46);
+  box-shadow: 0 0 0 4px rgba(103, 247, 177, 0.08);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.formGrid.singleLine {
+  grid-template-columns: 1fr;
+}
+
+.formGrid label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.formGrid input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid rgba(95, 216, 255, 0.18);
+  border-radius: 999px;
+  outline: none;
+  background: rgba(4, 8, 7, 0.52);
+}
+
+.formGrid select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid rgba(95, 216, 255, 0.18);
+  border-radius: 999px;
+  outline: none;
+  background: rgba(4, 8, 7, 0.72);
+}
+
+.formGrid input:focus,
+.formGrid select:focus {
+  border-color: rgba(103, 247, 177, 0.46);
+  box-shadow: 0 0 0 4px rgba(103, 247, 177, 0.08);
+}
+
+.formGrid .wideField {
+  grid-column: 1 / -1;
+}
+
+.providerPresetGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.providerPreset {
+  display: grid;
+  gap: 6px;
+  min-height: 86px;
+  padding: 13px;
+  color: var(--text);
+  text-align: left;
+  border: 1px solid rgba(95, 216, 255, 0.14);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+}
+
+.providerPreset strong {
+  font-size: 14px;
+}
+
+.providerPreset span {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 12px;
+}
+
+.providerPreset.active {
+  border-color: rgba(103, 247, 177, 0.46);
+  background:
+    linear-gradient(135deg, rgba(103, 247, 177, 0.12), rgba(95, 216, 255, 0.08)),
+    rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 4px rgba(103, 247, 177, 0.06);
+}
+
+.workflowPanel {
+  grid-area: flow;
+  padding: 22px;
+}
+
+.workflowTrack {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.workflowNode {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 9px;
+  min-height: 66px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.workflowNode p {
+  margin-bottom: 0;
+  color: #cbd9d2;
+  font-size: 13px;
+}
+
+.workflowNode.done .nodeIcon {
+  color: #06100b;
+  background: var(--mint);
+}
+
+.workflowNode.active {
+  border-color: rgba(95, 216, 255, 0.45);
+  background: rgba(95, 216, 255, 0.1);
+}
+
+.workflowNode.queued {
+  opacity: 0.68;
+}
+
+.orgPanel {
+  grid-area: org;
+  padding: 22px;
+}
+
+.roleMatrix {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.roleCard {
+  min-height: 176px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.roleCard.mint {
+  border-color: rgba(103, 247, 177, 0.28);
+}
+
+.roleCard.cyan {
+  border-color: rgba(95, 216, 255, 0.28);
+}
+
+.roleCard.amber {
+  border-color: rgba(255, 211, 106, 0.32);
+}
+
+.roleCard.rose {
+  border-color: rgba(255, 123, 156, 0.32);
+}
+
+.roleAvatar {
+  width: 42px;
+  height: 42px;
+  color: #06100b;
+  background: var(--mint);
+}
+
+.roleTopline span:last-child {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.roleCard strong {
+  display: block;
+  margin-top: 16px;
+  font-size: 20px;
+}
+
+.roleCard p {
+  margin-bottom: 0;
+  line-height: 1.55;
+  font-size: 13px;
+}
+
+.roleCard .department {
+  margin: 6px 0 10px;
+  color: var(--cyan);
+}
+
+.rightStack {
+  grid-area: side;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.focusPanel {
+  padding: 24px;
+  min-height: 260px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 16px),
+    var(--panel-strong);
+}
+
+.orbitalIcon {
+  width: 62px;
+  height: 62px;
+  margin-bottom: 22px;
+  color: #06100b;
+  background: linear-gradient(135deg, var(--amber), var(--mint));
+  box-shadow: 0 0 34px rgba(255, 211, 106, 0.22);
+}
+
+.focusPanel h2 {
+  margin-bottom: 18px;
+  font-size: 27px;
+  line-height: 1.25;
+}
+
+.pulseMeter {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pulseMeter span {
+  display: block;
+  width: 56%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--cyan), var(--mint), var(--amber));
+}
+
+.logPanel {
+  padding: 20px;
+}
+
+.logList {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.logList p {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 42px;
+  padding: 12px;
+  margin-bottom: 0;
+  line-height: 1.45;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.logList svg {
+  margin-top: 2px;
+  color: var(--amber);
+}
+
+.accountList {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.accountCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.accountCard strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 18px;
+}
+
+.providerPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  margin-bottom: 8px;
+  color: var(--mint);
+  border: 1px solid rgba(103, 247, 177, 0.24);
+  border-radius: 999px;
+  background: rgba(103, 247, 177, 0.08);
+  font-size: 12px;
+}
+
+.accountCard p {
+  margin-bottom: 5px;
+  color: var(--muted);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.accountStats {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 116px;
+}
+
+.accountStats span {
+  color: #cbd9d2;
+  font-size: 12px;
+}
+
+.compact {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.dangerButton {
+  color: var(--rose);
+  border-color: rgba(255, 123, 156, 0.28);
+  background: rgba(255, 123, 156, 0.08);
+}
+
+.linkButton {
+  text-decoration: none;
+}
+
+.emptyState {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.errorText {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  color: var(--rose) !important;
+  border: 1px solid rgba(255, 123, 156, 0.26);
+  border-radius: 16px;
+  background: rgba(255, 123, 156, 0.08);
+}
+
+.resultBox {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.resultBox p {
+  max-height: 360px;
+  padding: 14px;
+  margin-bottom: 0;
+  color: #d9e7df;
+  line-height: 1.7;
+  overflow: auto;
+  white-space: pre-wrap;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.resultBox span {
+  color: var(--mint);
+  font-size: 13px;
+}
+
+.callLogList {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.callLogItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(103, 247, 177, 0.16);
+  border-radius: 18px;
+  background: rgba(103, 247, 177, 0.045);
+}
+
+.callLogItem.failed {
+  border-color: rgba(255, 123, 156, 0.25);
+  background: rgba(255, 123, 156, 0.06);
+}
+
+.callLogItem strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.callLogItem p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.callLogItem > span {
+  color: var(--mint);
+  font-size: 12px;
+}
+
+.compactError {
+  grid-column: 1 / -1;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.sessionControlStack {
+  display: grid;
+  gap: 12px;
+}
+
+.workerRunPanel {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.commandStrip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+  gap: 14px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid rgba(95, 216, 255, 0.18);
+  border-radius: 22px;
+  background:
+    linear-gradient(90deg, rgba(95, 216, 255, 0.07), transparent),
+    rgba(4, 8, 7, 0.45);
+}
+
+.commandStrip strong,
+.commandStrip span {
+  display: block;
+}
+
+.commandStrip strong {
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.commandStrip span {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.commandForm {
+  display: flex;
+  gap: 10px;
+}
+
+.commandForm input {
+  min-width: 0;
+  flex: 1;
+  min-height: 42px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid rgba(103, 247, 177, 0.22);
+  border-radius: 999px;
+  outline: none;
+  background: rgba(4, 8, 7, 0.72);
+}
+
+.eventContent {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.taskList,
+.roleConfigList,
+.settingsGrid,
+.logTable {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.taskCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  color: var(--text);
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.taskCard.selected {
+  border-color: rgba(103, 247, 177, 0.42);
+  background: rgba(103, 247, 177, 0.08);
+}
+
+.taskCard strong,
+.roleConfigItem strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.taskCard p {
+  display: -webkit-box;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.taskCard > span,
+.logRow > span {
+  align-self: start;
+  min-height: 28px;
+  padding: 5px 10px;
+  color: var(--mint);
+  font-size: 12px;
+  border: 1px solid rgba(103, 247, 177, 0.22);
+  border-radius: 999px;
+  background: rgba(103, 247, 177, 0.08);
+}
+
+.rolePage {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+
+.rolePage .roleConfigPanel {
+  grid-area: auto;
+  width: 100%;
+}
+
+.roleConfigList {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panelHint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 13px;
+}
+
+.roleConfigItem,
+.settingTile,
+.logRow {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.roleConfigItem p,
+.settingTile span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.roleConfigItem code {
+  display: block;
+  margin-top: 14px;
+  padding: 12px;
+  color: #cfeee0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  border: 1px solid rgba(95, 216, 255, 0.16);
+  border-radius: 16px;
+  background: rgba(4, 8, 7, 0.52);
+}
+
+.roleCardActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.editorBlock {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.editorTextarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.toggleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.toggleRow input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--mint);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(95, 216, 255, 0.14), transparent 34%),
+    rgba(1, 6, 5, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.roleEditorModal {
+  display: grid;
+  gap: 18px;
+  width: min(860px, 100%);
+  max-height: min(860px, calc(100vh - 48px));
+  padding: 24px;
+  overflow: auto;
+  border: 1px solid rgba(103, 247, 177, 0.2);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035)),
+    #0b1411;
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.48);
+}
+
+.rolePromptTextarea {
+  min-height: 180px;
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.logPage {
+  display: grid;
+  gap: 18px;
+}
+
+.logRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(4, auto);
+  align-items: center;
+  gap: 12px;
+}
+
+.logRow.failed {
+  border-color: rgba(255, 123, 156, 0.28);
+}
+
+.logRow strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.logRow p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.settingsGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settingTile {
+  display: grid;
+  gap: 8px;
+}
+
+.settingTile strong {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) {
+  .appShell,
+  .mainGrid,
+  .fuelGrid,
+  .taskGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mainGrid {
+    grid-template-areas:
+      "flow"
+      "org"
+      "side";
+  }
+
+  .fuelGrid {
+    grid-template-areas:
+      "mission"
+      "login"
+      "org"
+      "side";
+  }
+
+  .taskGrid {
+    grid-template-areas:
+      "mission"
+      "dispatch"
+      "org"
+      "side";
+  }
+
+  .workspaceGrid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "mission"
+      "run"
+      "org"
+      "list"
+      "side";
+  }
+
+  .sideRail {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .navList {
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    overflow-x: auto;
+  }
+
+  .relayBox {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 820px) {
+  .commandSurface {
+    padding: 18px;
+  }
+
+  .commandHeader,
+  .deckHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  h1 {
+    font-size: 31px;
+  }
+
+  .metricGrid,
+  .roleMatrix,
+  .workflowTrack,
+  .roleConfigList,
+  .settingsGrid,
+  .workspaceGrid,
+  .commandStrip,
+  .formGrid,
+  .accountCard,
+  .logRow {
+    grid-template-columns: 1fr;
+  }
+
+  .rolePage {
+    width: 100%;
+  }
+
+  .commandForm {
+    flex-direction: column;
+  }
+
+  .workflowNode {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .workflowNode svg:last-child {
+    display: none;
+  }
+
+  .modalOverlay {
+    padding: 12px;
+    place-items: stretch;
+  }
+
+  .roleEditorModal {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .modalFooter {
+    align-items: stretch;
+  }
+
+  .modalFooter .headerActions {
+    width: 100%;
+  }
+
+  .modalFooter .headerActions button {
+    flex: 1;
+  }
+}

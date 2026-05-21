@@ -1,0 +1,13 @@
+{
+  "name": "ai-company",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/desktop"
+  ],
+  "scripts": {
+    "desktop:dev": "npm --workspace apps/desktop run dev",
+    "desktop:build": "npm --workspace apps/desktop run build",
+    "cli:install": "powershell -NoProfile -ExecutionPolicy Bypass -File cli/install-star.ps1"
+  }
+}
