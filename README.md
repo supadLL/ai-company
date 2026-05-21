@@ -72,4 +72,4 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-GitHub Actions will build Windows, Linux, macOS Intel, and macOS Apple Silicon packages with the FastAPI local relay included as a Tauri sidecar.
+GitHub Actions will build Windows, Linux, macOS Intel, and macOS Apple Silicon packages with the FastAPI local relay included as a Tauri sidecar. Tags matching `v*` or `V*` trigger the release workflow.

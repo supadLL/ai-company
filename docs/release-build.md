@@ -9,6 +9,13 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
+Uppercase tags are also supported:
+
+```powershell
+git tag V0.1.0
+git push origin V0.1.0
+```
+
 The release workflow builds:
 
 - Windows x64
