@@ -143,6 +143,53 @@ class AgentWorkerRun(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=now_utc)
 
 
+class RoleProcessConfig(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "role_process_configs"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    role_id: str = Field(index=True)
+    shell_type: str = "powershell"
+    command: str = ""
+    args: str = ""
+    enabled: bool = True
+    auto_restart: bool = False
+    env_json: str = "{}"
+    created_at: datetime = Field(default_factory=now_utc)
+    updated_at: datetime = Field(default_factory=now_utc)
+
+
+class AgentProcess(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "agent_processes"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    workspace_id: str = Field(index=True)
+    session_id: str | None = Field(default=None, index=True)
+    role_id: str = Field(index=True)
+    role_title: str = ""
+    shell_type: str = "powershell"
+    command: str
+    args: str = ""
+    cwd: str
+    pid: int | None = None
+    status: str = Field(default="starting", index=True)
+    exit_code: int | None = None
+    last_error: str | None = None
+    started_at: datetime = Field(default_factory=now_utc)
+    stopped_at: datetime | None = None
+    created_at: datetime = Field(default_factory=now_utc)
+    updated_at: datetime = Field(default_factory=now_utc)
+
+
+class AgentProcessLog(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "agent_process_logs"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    process_id: str = Field(index=True)
+    stream: str = Field(default="stdout", index=True)
+    content: str = ""
+    created_at: datetime = Field(default_factory=now_utc)
+
+
 class ModelCallLog(SQLModel, table=True):
     id: str = Field(default_factory=new_id, primary_key=True)
     task_id: str | None = Field(default=None, index=True)

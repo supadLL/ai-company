@@ -1,5 +1,9 @@
 import asyncio
 import json
+import os
+import signal
+import shlex
+import subprocess
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,7 +12,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
-from app.db.models import AgentSession, AgentSessionEvent, AgentWorkerRun, CompanyRole, ModelCallLog, UpstreamAccount, Workspace
+from app.db.models import (
+    AgentProcess,
+    AgentProcessLog,
+    AgentSession,
+    AgentSessionEvent,
+    AgentWorkerRun,
+    CompanyRole,
+    ModelCallLog,
+    RoleProcessConfig,
+    UpstreamAccount,
+    Workspace,
+)
 from app.db.session import engine, get_session
 from app.relay.client import RelayError, run_openai_chat_completion
 from app.routes.relay import account_to_public, select_account
@@ -19,6 +34,7 @@ router = APIRouter()
 PROJECT_ROOT = str(Path(__file__).resolve().parents[4])
 RUNNER_STOP_FLAGS: dict[str, threading.Event] = {}
 RUNNER_THREADS: dict[str, threading.Thread] = {}
+PROCESS_HANDLES: dict[str, subprocess.Popen] = {}
 
 
 class WorkspaceCreate(BaseModel):
@@ -61,6 +77,15 @@ class SessionUpdate(BaseModel):
 
 class SessionStatusUpdate(BaseModel):
     status: str
+
+
+class RoleProcessConfigUpsert(BaseModel):
+    shell_type: str = "powershell"
+    command: str = ""
+    args: str = ""
+    enabled: bool = True
+    auto_restart: bool = False
+    env: dict[str, str] = Field(default_factory=dict)
 
 
 def utc_now() -> datetime:
@@ -187,6 +212,99 @@ def event_to_public(event: AgentSessionEvent) -> dict:
 
 def worker_run_to_public(worker_run: AgentWorkerRun) -> dict:
     return worker_run.model_dump()
+
+
+def process_config_to_public(config: RoleProcessConfig) -> dict:
+    payload = config.model_dump()
+    try:
+        payload["env"] = json.loads(config.env_json or "{}")
+    except json.JSONDecodeError:
+        payload["env"] = {}
+    return payload
+
+
+def process_to_public(process: AgentProcess) -> dict:
+    return process.model_dump()
+
+
+def process_log_to_public(log: AgentProcessLog) -> dict:
+    return log.model_dump()
+
+
+def default_process_config(role_id: str) -> RoleProcessConfig:
+    if os.name == "nt":
+        return RoleProcessConfig(
+            role_id=role_id,
+            shell_type="powershell",
+            command="powershell.exe",
+            args="-NoProfile -NoExit",
+        )
+    shell = os.environ.get("SHELL", "/bin/bash")
+    return RoleProcessConfig(role_id=role_id, shell_type="bash", command=shell, args="-l")
+
+
+def build_process_args(config: RoleProcessConfig) -> list[str]:
+    args = [config.command.strip()]
+    if not args[0]:
+        raise HTTPException(status_code=400, detail="role process command is empty")
+    if config.args.strip():
+        try:
+            args.extend(shlex.split(config.args.strip(), posix=True))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"invalid process args: {exc}") from exc
+    return args
+
+
+def append_process_log(process_id: str, stream: str, content: str) -> None:
+    if not content:
+        return
+    with Session(engine) as db:
+        db.add(AgentProcessLog(process_id=process_id, stream=stream, content=content.rstrip("\n")))
+        db.commit()
+
+
+def read_process_stream(process_id: str, stream: str, pipe) -> None:
+    try:
+        for line in iter(pipe.readline, ""):
+            append_process_log(process_id, stream, line)
+    finally:
+        try:
+            pipe.close()
+        except Exception:
+            pass
+
+
+def watch_process_exit(process_id: str, popen: subprocess.Popen) -> None:
+    exit_code = popen.wait()
+    PROCESS_HANDLES.pop(process_id, None)
+    restart_session_id: str | None = None
+    restart_role_id: str | None = None
+    with Session(engine) as db:
+        process = db.get(AgentProcess, process_id)
+        if process is not None and process.status == "running":
+            process.status = "exited"
+            process.exit_code = exit_code
+            process.stopped_at = utc_now()
+            process.updated_at = utc_now()
+            db.add(process)
+            config = db.exec(select(RoleProcessConfig).where(RoleProcessConfig.role_id == process.role_id)).first()
+            agent_session = db.get(AgentSession, process.session_id) if process.session_id else None
+            if config is not None and config.enabled and config.auto_restart and agent_session is not None and agent_session.status == "running":
+                restart_session_id = process.session_id
+                restart_role_id = process.role_id
+            db.commit()
+    append_process_log(process_id, "system", f"process exited with code {exit_code}")
+    if restart_session_id is not None and restart_role_id is not None:
+        append_process_log(process_id, "system", "auto restart scheduled")
+        threading.Timer(2.0, restart_role_process_after_exit, args=(restart_session_id, restart_role_id, process_id)).start()
+
+
+def restart_role_process_after_exit(session_id: str, role_id: str, previous_process_id: str) -> None:
+    try:
+        with Session(engine) as db:
+            start_role_process(session_id, role_id, db)
+    except Exception as exc:
+        append_process_log(previous_process_id, "system", f"auto restart failed: {exc}")
 
 
 def get_session_roles(session: Session, agent_session: AgentSession) -> list[CompanyRole]:
@@ -552,6 +670,203 @@ def list_worker_runs(
         query.order_by(AgentWorkerRun.created_at.desc()).limit(max(1, min(limit, 100)))
     ).all()
     return [worker_run_to_public(worker_run) for worker_run in worker_runs]
+
+
+@router.get("/role-process-configs")
+def list_role_process_configs(session: Session = Depends(get_session)) -> list[dict]:
+    roles = session.exec(select(CompanyRole).order_by(CompanyRole.sort_order.asc(), CompanyRole.created_at.asc())).all()
+    configs = {config.role_id: config for config in session.exec(select(RoleProcessConfig)).all()}
+    payload = []
+    for role in roles:
+        config = configs.get(role.id) or default_process_config(role.id)
+        item = process_config_to_public(config)
+        item["role_title"] = role.title
+        payload.append(item)
+    return payload
+
+
+@router.put("/role-process-configs/{role_id}")
+def upsert_role_process_config(
+    role_id: str,
+    payload: RoleProcessConfigUpsert,
+    session: Session = Depends(get_session),
+) -> dict:
+    role = session.get(CompanyRole, role_id)
+    if role is None:
+        raise HTTPException(status_code=404, detail="role not found")
+    config = session.exec(select(RoleProcessConfig).where(RoleProcessConfig.role_id == role_id)).first()
+    if config is None:
+        config = RoleProcessConfig(role_id=role_id)
+    config.shell_type = payload.shell_type
+    config.command = payload.command
+    config.args = payload.args
+    config.enabled = payload.enabled
+    config.auto_restart = payload.auto_restart
+    config.env_json = json.dumps(payload.env, ensure_ascii=False)
+    config.updated_at = utc_now()
+    session.add(config)
+    session.commit()
+    session.refresh(config)
+    item = process_config_to_public(config)
+    item["role_title"] = role.title
+    return item
+
+
+@router.get("/agent-processes")
+def list_agent_processes(
+    workspace_id: str | None = None,
+    session_id: str | None = None,
+    session: Session = Depends(get_session),
+) -> list[dict]:
+    query = select(AgentProcess)
+    if workspace_id:
+        query = query.where(AgentProcess.workspace_id == workspace_id)
+    if session_id:
+        query = query.where(AgentProcess.session_id == session_id)
+    processes = session.exec(query.order_by(AgentProcess.created_at.desc()).limit(100)).all()
+    return [process_to_public(process) for process in processes]
+
+
+@router.get("/agent-processes/{process_id}/logs")
+def list_agent_process_logs(
+    process_id: str,
+    limit: int = 100,
+    session: Session = Depends(get_session),
+) -> list[dict]:
+    logs = session.exec(
+        select(AgentProcessLog)
+        .where(AgentProcessLog.process_id == process_id)
+        .order_by(AgentProcessLog.created_at.desc())
+        .limit(max(1, min(limit, 300)))
+    ).all()
+    return [process_log_to_public(log) for log in reversed(logs)]
+
+
+@router.post("/sessions/{session_id}/roles/{role_id}/process/start")
+def start_role_process(session_id: str, role_id: str, session: Session = Depends(get_session)) -> dict:
+    agent_session = session.get(AgentSession, session_id)
+    role = session.get(CompanyRole, role_id)
+    if agent_session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if role is None:
+        raise HTTPException(status_code=404, detail="role not found")
+    workspace = session.get(Workspace, agent_session.workspace_id)
+    if workspace is None:
+        raise HTTPException(status_code=404, detail="workspace not found")
+    running = session.exec(
+        select(AgentProcess)
+        .where(AgentProcess.session_id == session_id)
+        .where(AgentProcess.role_id == role_id)
+        .where(AgentProcess.status.in_(["starting", "running"]))
+    ).first()
+    if running is not None:
+        return process_to_public(running)
+    config = session.exec(select(RoleProcessConfig).where(RoleProcessConfig.role_id == role_id)).first() or default_process_config(role_id)
+    if not config.enabled:
+        raise HTTPException(status_code=400, detail="role process config is disabled")
+    command_args = build_process_args(config)
+    env = os.environ.copy()
+    try:
+        extra_env = json.loads(config.env_json or "{}")
+    except json.JSONDecodeError:
+        extra_env = {}
+    env.update({str(key): str(value) for key, value in extra_env.items()})
+    env.update(
+        {
+            "AI_COMPANY_API": "http://127.0.0.1:8787",
+            "AI_COMPANY_WORKSPACE": workspace.path,
+            "AI_COMPANY_WORKSPACE_ID": workspace.id,
+            "AI_COMPANY_SESSION_ID": agent_session.id,
+            "AI_COMPANY_ROLE_ID": role.id,
+            "AI_COMPANY_ROLE_TITLE": role.title,
+            "AI_COMPANY_MODEL": agent_session.model,
+        }
+    )
+    creationflags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+    process = AgentProcess(
+        workspace_id=workspace.id,
+        session_id=session_id,
+        role_id=role.id,
+        role_title=role.title,
+        shell_type=config.shell_type,
+        command=config.command,
+        args=config.args,
+        cwd=workspace.path,
+        status="starting",
+    )
+    session.add(process)
+    session.commit()
+    session.refresh(process)
+    try:
+        popen = subprocess.Popen(
+            command_args,
+            cwd=workspace.path,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            creationflags=creationflags,
+            start_new_session=os.name != "nt",
+        )
+    except OSError as exc:
+        process.status = "failed"
+        process.last_error = str(exc)
+        process.stopped_at = utc_now()
+        process.updated_at = utc_now()
+        session.add(process)
+        session.commit()
+        append_process_log(process.id, "system", str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    PROCESS_HANDLES[process.id] = popen
+    process.pid = popen.pid
+    process.status = "running"
+    process.updated_at = utc_now()
+    session.add(process)
+    session.commit()
+    session.refresh(process)
+    append_process_log(process.id, "system", f"started pid {popen.pid}: {' '.join(command_args)}")
+    threading.Thread(target=read_process_stream, args=(process.id, "stdout", popen.stdout), daemon=True).start()
+    threading.Thread(target=read_process_stream, args=(process.id, "stderr", popen.stderr), daemon=True).start()
+    threading.Thread(target=watch_process_exit, args=(process.id, popen), daemon=True).start()
+    return process_to_public(process)
+
+
+@router.post("/agent-processes/{process_id}/stop")
+def stop_agent_process(process_id: str, session: Session = Depends(get_session)) -> dict:
+    process = session.get(AgentProcess, process_id)
+    if process is None:
+        raise HTTPException(status_code=404, detail="process not found")
+    handle = PROCESS_HANDLES.get(process_id)
+    if handle is not None and handle.poll() is None:
+        if os.name == "nt":
+            handle.terminate()
+        else:
+            os.killpg(os.getpgid(handle.pid), signal.SIGTERM)
+    process.status = "stopped"
+    process.stopped_at = utc_now()
+    process.updated_at = utc_now()
+    session.add(process)
+    session.commit()
+    append_process_log(process_id, "system", "stop requested")
+    return process_to_public(process)
+
+
+@router.post("/sessions/{session_id}/roles/{role_id}/process/restart")
+def restart_role_process(session_id: str, role_id: str, session: Session = Depends(get_session)) -> dict:
+    running = session.exec(
+        select(AgentProcess)
+        .where(AgentProcess.session_id == session_id)
+        .where(AgentProcess.role_id == role_id)
+        .where(AgentProcess.status.in_(["starting", "running"]))
+        .order_by(AgentProcess.created_at.desc())
+    ).first()
+    if running is not None:
+        stop_agent_process(running.id, session)
+    return start_role_process(session_id, role_id, session)
 
 
 @router.put("/{workspace_id}")

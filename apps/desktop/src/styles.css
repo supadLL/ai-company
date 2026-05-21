@@ -900,6 +900,83 @@ h2 {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.processList {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.processCard {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(95, 216, 255, 0.15);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.processConfigGrid {
+  grid-template-columns: minmax(120px, 0.75fr) minmax(160px, 1fr) minmax(160px, 1fr);
+  align-items: end;
+}
+
+.processConfigGrid .processToggle {
+  min-height: 46px;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid rgba(95, 216, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(4, 8, 7, 0.38);
+  text-transform: none;
+}
+
+.processHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.processHeader strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.processHeader p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.processHeader > span {
+  color: var(--mint);
+  font-size: 12px;
+}
+
+.processLogPreview {
+  display: grid;
+  gap: 6px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.processLogPreview p {
+  margin: 0;
+  padding: 8px 10px;
+  color: #d9e7df;
+  font-family: "Cascadia Mono", "Consolas", monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  border-radius: 12px;
+  background: rgba(4, 8, 7, 0.56);
+}
+
+.processLogPreview span {
+  margin-right: 8px;
+  color: var(--amber);
+}
+
 .commandStrip {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);

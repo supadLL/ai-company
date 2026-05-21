@@ -162,6 +162,44 @@ type AgentWorkerRun = {
   created_at: string;
 };
 
+type RoleProcessConfig = {
+  id?: string;
+  role_id: string;
+  role_title?: string;
+  shell_type: string;
+  command: string;
+  args: string;
+  enabled: boolean;
+  auto_restart: boolean;
+  env?: Record<string, string>;
+};
+
+type AgentProcess = {
+  id: string;
+  workspace_id: string;
+  session_id?: string | null;
+  role_id: string;
+  role_title: string;
+  shell_type: string;
+  command: string;
+  args: string;
+  cwd: string;
+  pid?: number | null;
+  status: string;
+  exit_code?: number | null;
+  last_error?: string | null;
+  started_at: string;
+  stopped_at?: string | null;
+};
+
+type AgentProcessLog = {
+  id: string;
+  process_id: string;
+  stream: string;
+  content: string;
+  created_at: string;
+};
+
 type AgentSession = {
   id: string;
   workspace_id: string;
@@ -306,6 +344,9 @@ export function App() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [sessions, setSessions] = useState<AgentSession[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [roleProcessConfigs, setRoleProcessConfigs] = useState<RoleProcessConfig[]>([]);
+  const [agentProcesses, setAgentProcesses] = useState<AgentProcess[]>([]);
+  const [processLogs, setProcessLogs] = useState<Record<string, AgentProcessLog[]>>({});
   const [selectedTaskId, setSelectedTaskId] = useState("");
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
@@ -373,7 +414,19 @@ export function App() {
 
   async function loadDashboard() {
     try {
-      const [presetData, accountData, summaryData, logData, taskData, roleData, workspaceData, activeWorkspaceData, sessionData] = await Promise.all([
+      const [
+        presetData,
+        accountData,
+        summaryData,
+        logData,
+        taskData,
+        roleData,
+        workspaceData,
+        activeWorkspaceData,
+        sessionData,
+        processConfigData,
+        processData
+      ] = await Promise.all([
         requestJson<ProviderPreset[]>("/relay/provider-presets"),
         requestJson<Account[]>("/relay/accounts"),
         requestJson<UsageSummary>("/relay/usage/summary"),
@@ -382,7 +435,9 @@ export function App() {
         requestJson<Role[]>("/roles"),
         requestJson<Workspace[]>("/workspaces"),
         requestJson<Workspace>("/workspaces/active"),
-        requestJson<AgentSession[]>("/workspaces/sessions")
+        requestJson<AgentSession[]>("/workspaces/sessions"),
+        requestJson<RoleProcessConfig[]>("/workspaces/role-process-configs"),
+        requestJson<AgentProcess[]>("/workspaces/agent-processes")
       ]);
       setProviderPresets(presetData);
       setAccounts(accountData);
@@ -392,6 +447,8 @@ export function App() {
       setRoles(roleData);
       setWorkspaces(workspaceData);
       setSessions(sessionData);
+      setRoleProcessConfigs(processConfigData);
+      setAgentProcesses(processData);
       setSelectedTaskId((current) => current || taskData[0]?.id || "");
       setSelectedWorkspaceId((current) => current || activeWorkspaceData.id || workspaceData[0]?.id || "");
       setActiveWorkspaceId((current) => {
@@ -730,6 +787,79 @@ export function App() {
     }
   }
 
+  async function saveRoleProcessConfig(roleId: string, patch: Partial<RoleProcessConfig>) {
+    const current = roleProcessConfigs.find((config) => config.role_id === roleId);
+    const payload = {
+      shell_type: patch.shell_type ?? current?.shell_type ?? "powershell",
+      command: patch.command ?? current?.command ?? "",
+      args: patch.args ?? current?.args ?? "",
+      enabled: patch.enabled ?? current?.enabled ?? true,
+      auto_restart: patch.auto_restart ?? current?.auto_restart ?? false,
+      env: patch.env ?? current?.env ?? {}
+    };
+    setBusy(true);
+    try {
+      const saved = await requestJson<RoleProcessConfig>(`/workspaces/role-process-configs/${roleId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload)
+      });
+      setRoleProcessConfigs((items) => items.some((item) => item.role_id === roleId) ? items.map((item) => item.role_id === roleId ? saved : item) : [...items, saved]);
+      setStatus("角色进程配置已保存");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "保存进程配置失败");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function startRoleProcess(sessionId: string, roleId: string) {
+    setBusy(true);
+    try {
+      await requestJson<AgentProcess>(`/workspaces/sessions/${sessionId}/roles/${roleId}/process/start`, { method: "POST" });
+      await loadDashboard();
+      setStatus("角色进程已启动");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "启动角色进程失败");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function stopAgentProcess(processId: string) {
+    setBusy(true);
+    try {
+      await requestJson<AgentProcess>(`/workspaces/agent-processes/${processId}/stop`, { method: "POST" });
+      await loadDashboard();
+      setStatus("角色进程已停止");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "停止角色进程失败");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function restartRoleProcess(sessionId: string, roleId: string) {
+    setBusy(true);
+    try {
+      await requestJson<AgentProcess>(`/workspaces/sessions/${sessionId}/roles/${roleId}/process/restart`, { method: "POST" });
+      await loadDashboard();
+      setStatus("角色进程已重启");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "重启角色进程失败");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadProcessLogs(processId: string) {
+    try {
+      const logs = await requestJson<AgentProcessLog[]>(`/workspaces/agent-processes/${processId}/logs`);
+      setProcessLogs((current) => ({ ...current, [processId]: logs }));
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "读取进程日志失败");
+    }
+  }
+
   async function runSelectedRole() {
     if (!selectedTask || !selectedRole) {
       setStatus("请先创建任务并选择岗位");
@@ -928,15 +1058,21 @@ export function App() {
         {activePage === "workspaces" ? (
           <WorkspaceRuntime
             activeWorkspace={activeWorkspace}
+            agentProcesses={agentProcesses}
             busy={busy}
             commandValue={workspaceCommand}
             createSession={createSession}
             createWorkspace={createWorkspace}
+            loadProcessLogs={loadProcessLogs}
             onCommand={runWorkspaceCommand}
             onPause={pauseSession}
             onStart={startSession}
             onStop={stopSession}
             onTick={tickSession}
+            processLogs={processLogs}
+            restartRoleProcess={restartRoleProcess}
+            roleProcessConfigs={roleProcessConfigs}
+            saveRoleProcessConfig={saveRoleProcessConfig}
             selectedSessionId={selectedSessionId}
             selectedWorkspaceId={selectedWorkspaceId}
             selectedSession={selectedSession}
@@ -947,6 +1083,8 @@ export function App() {
             setSelectedWorkspaceId={setSelectedWorkspaceId}
             setSessionForm={setSessionForm}
             setWorkspaceForm={setWorkspaceForm}
+            startRoleProcess={startRoleProcess}
+            stopAgentProcess={stopAgentProcess}
             workspaceForm={workspaceForm}
             workspaces={workspaces}
           />
@@ -1017,15 +1155,21 @@ export function App() {
 
 function WorkspaceRuntime(props: {
   activeWorkspace?: Workspace;
+  agentProcesses: AgentProcess[];
   busy: boolean;
   commandValue: string;
   createSession: () => void;
   createWorkspace: () => void;
+  loadProcessLogs: (processId: string) => void;
   onCommand: () => void;
   onPause: (sessionId: string) => void;
   onStart: (sessionId: string) => void;
   onStop: (sessionId: string) => void;
   onTick: (sessionId: string) => void;
+  processLogs: Record<string, AgentProcessLog[]>;
+  restartRoleProcess: (sessionId: string, roleId: string) => void;
+  roleProcessConfigs: RoleProcessConfig[];
+  saveRoleProcessConfig: (roleId: string, patch: Partial<RoleProcessConfig>) => void;
   selectedSession?: AgentSession;
   selectedSessionId: string;
   selectedWorkspaceId: string;
@@ -1036,6 +1180,8 @@ function WorkspaceRuntime(props: {
   setSelectedWorkspaceId: (value: string) => void;
   setSessionForm: (value: { title: string; objective: string; model: string; tick_interval_seconds: number; role_ids: string }) => void;
   setWorkspaceForm: (value: { name: string; path: string; description: string }) => void;
+  startRoleProcess: (sessionId: string, roleId: string) => void;
+  stopAgentProcess: (processId: string) => void;
   workspaceForm: { name: string; path: string; description: string };
   workspaces: Workspace[];
 }) {
@@ -1229,6 +1375,21 @@ function WorkspaceRuntime(props: {
             <p className="emptyState">没有可用会话。</p>
           )}
         </section>
+        {props.selectedSession ? (
+          <RoleProcessPanel
+            agentProcesses={props.agentProcesses}
+            busy={props.busy}
+            configs={props.roleProcessConfigs}
+            loadProcessLogs={props.loadProcessLogs}
+            processLogs={props.processLogs}
+            restartRoleProcess={props.restartRoleProcess}
+            roles={props.selectedSession.roles}
+            saveConfig={props.saveRoleProcessConfig}
+            sessionId={props.selectedSession.id}
+            startRoleProcess={props.startRoleProcess}
+            stopAgentProcess={props.stopAgentProcess}
+          />
+        ) : null}
       </aside>
     </section>
   );
@@ -1926,6 +2087,140 @@ function RecentWorkerRuns({ workerRuns }: { workerRuns: AgentWorkerRun[] }) {
             </article>
           ))
         )}
+      </div>
+    </section>
+  );
+}
+
+const shellPresets = [
+  { id: "powershell", label: "PowerShell", command: "powershell.exe", args: "-NoProfile -NoExit" },
+  { id: "cmd", label: "CMD", command: "cmd.exe", args: "/K" },
+  { id: "bash", label: "Bash", command: "bash", args: "-l" },
+  { id: "python", label: "Python", command: "python", args: "" },
+  { id: "node", label: "Node", command: "node", args: "" },
+  { id: "custom", label: "Custom", command: "", args: "" }
+];
+
+function RoleProcessPanel(props: {
+  agentProcesses: AgentProcess[];
+  busy: boolean;
+  configs: RoleProcessConfig[];
+  loadProcessLogs: (processId: string) => void;
+  processLogs: Record<string, AgentProcessLog[]>;
+  restartRoleProcess: (sessionId: string, roleId: string) => void;
+  roles: Role[];
+  saveConfig: (roleId: string, patch: Partial<RoleProcessConfig>) => void;
+  sessionId: string;
+  startRoleProcess: (sessionId: string, roleId: string) => void;
+  stopAgentProcess: (processId: string) => void;
+}) {
+  return (
+    <section className="logPanel">
+      <div className="panelTitle">
+        <h2>角色进程</h2>
+        <span>{props.roles.length} roles</span>
+      </div>
+      <div className="processList">
+        {props.roles.map((role) => {
+          const config = props.configs.find((item) => item.role_id === role.id);
+          const process = props.agentProcesses.find((item) => item.session_id === props.sessionId && item.role_id === role.id && ["starting", "running"].includes(item.status));
+          const logs = process ? props.processLogs[process.id] ?? [] : [];
+          const shellType = config?.shell_type ?? "powershell";
+          return (
+            <article className="processCard" key={role.id}>
+              <div className="processHeader">
+                <div>
+                  <strong>{role.title}</strong>
+                  <p>{process ? `${statusText(process.status)} · pid ${process.pid ?? "-"}` : "未启动"}</p>
+                </div>
+                <span>{shellType}</span>
+              </div>
+              <div className="formGrid processConfigGrid">
+                <label>
+                  控制工具
+                  <select
+                    defaultValue={shellType}
+                    onChange={(event) => {
+                      const preset = shellPresets.find((item) => item.id === event.target.value);
+                      props.saveConfig(role.id, {
+                        ...config,
+                        shell_type: event.target.value,
+                        command: preset?.command ?? config?.command ?? "",
+                        args: preset?.args ?? config?.args ?? ""
+                      });
+                    }}
+                  >
+                    {shellPresets.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  启动命令
+                  <input
+                    defaultValue={config?.command ?? ""}
+                    placeholder="powershell.exe / bash / node / python"
+                    onBlur={(event) => props.saveConfig(role.id, { ...config, command: event.target.value })}
+                  />
+                </label>
+                <label>
+                  参数
+                  <input
+                    defaultValue={config?.args ?? ""}
+                    placeholder="-NoProfile -NoExit"
+                    onBlur={(event) => props.saveConfig(role.id, { ...config, args: event.target.value })}
+                  />
+                </label>
+                <label className="toggleRow processToggle">
+                  <input
+                    type="checkbox"
+                    defaultChecked={config?.enabled ?? true}
+                    onChange={(event) => props.saveConfig(role.id, { ...config, enabled: event.target.checked })}
+                  />
+                  启用进程
+                </label>
+                <label className="toggleRow processToggle">
+                  <input
+                    type="checkbox"
+                    defaultChecked={config?.auto_restart ?? false}
+                    onChange={(event) => props.saveConfig(role.id, { ...config, auto_restart: event.target.checked })}
+                  />
+                  自动重启
+                </label>
+              </div>
+              <div className="headerActions">
+                <button className="ghostButton compact" type="button" onClick={() => props.startRoleProcess(props.sessionId, role.id)} disabled={props.busy || !!process}>
+                  启动
+                </button>
+                {process ? (
+                  <button className="ghostButton compact" type="button" onClick={() => props.stopAgentProcess(process.id)} disabled={props.busy}>
+                    停止
+                  </button>
+                ) : null}
+                <button className="ghostButton compact" type="button" onClick={() => props.restartRoleProcess(props.sessionId, role.id)} disabled={props.busy}>
+                  重启
+                </button>
+                {process ? (
+                  <button className="ghostButton compact" type="button" onClick={() => props.loadProcessLogs(process.id)} disabled={props.busy}>
+                    日志
+                  </button>
+                ) : null}
+              </div>
+              {logs.length ? (
+                <div className="processLogPreview">
+                  {logs.slice(-4).map((log) => (
+                    <p key={log.id}>
+                      <span>{log.stream}</span>
+                      {log.content}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

@@ -30,7 +30,7 @@ AI Company 是一个本地优先的桌面端“AI 公司”工作台。
 - [x] 支持真实 CLI 入口 `star ai-company`，把命令执行目录发送给本地 API。
 - [x] 支持持续协作会话的第一版数据结构和事件流。
 - [x] 支持 Agent Worker Run 记录，以工作区路径作为 cwd 执行边界。
-- [ ] 支持真实 Agent Worker 进程以工作区路径作为 cwd 长时间运行。
+- [x] 支持真实 Agent Worker 进程以工作区路径作为 cwd 长时间运行（MVP：角色可启动独立命令进程）。
 - [ ] 支持多个工作区同时存在，且每个工作区拥有独立 Agent 会话、状态和日志。
 - [ ] 支持持续任务队列，避免只依赖内存线程。
 - [ ] 支持工作区文件工具权限，控制 Agent 能读写哪些目录和文件。
@@ -52,7 +52,7 @@ MVP 不追求复杂自治，也不做完全开放式多 Agent 网络。先做固
 - [x] 本地数据库：SQLite + SQLModel
 - [x] 模型调用：通过本地 API 服务统一中转
 - [x] 状态持久化：SQLite
-- [ ] 长时间任务执行：独立 worker / 队列 / 进程管理
+- [x] 长时间任务执行：独立 worker / 队列 / 进程管理（MVP：角色进程管理，队列待补）
 
 ## 5. 已完成的第一轮骨架
 
@@ -171,7 +171,9 @@ TODO:
 - [x] 后端提供 `POST /workspaces/activate` 和 `GET /workspaces/active`
 - [x] 前端轮询 active workspace，外部命令执行后自动同步
 - [x] 将工作区路径传递给 Agent Worker Run cwd
-- [ ] 将工作区路径传递给真实 worker 进程 cwd
+- [x] 将工作区路径传递给真实 worker 进程 cwd
+- [x] 支持按角色配置 PowerShell / CMD / Bash / Python / Node / 自定义命令
+- [x] 支持角色进程启动、停止、重启、日志查看和异常退出自动重启
 - [ ] 支持多个持续会话并发运行
 - [ ] 支持 App 重启后恢复会话状态
 - [ ] 支持会话心跳、失败恢复和超时处理
@@ -282,6 +284,9 @@ POST   /relay/chat/completions
 - [x] workspaces
 - [x] agent_sessions
 - [x] agent_session_events
+- [x] role_process_configs
+- [x] agent_processes
+- [x] agent_process_logs
 - [ ] messages
 - [ ] provider_settings
 - [ ] local_sessions
@@ -312,6 +317,7 @@ POST   /relay/chat/completions
 - [x] 左侧导航 Tab 切换
 - [x] 当前活跃工作区展示
 - [x] 命令输入条支持 `star ai-company`
+- [x] 工作区页面支持角色进程配置、启动、停止、重启和日志查看
 - [ ] 页面动效和状态反馈进一步打磨
 - [ ] 表单校验和错误提示完善
 - [ ] 空状态、加载态、失败态完善
